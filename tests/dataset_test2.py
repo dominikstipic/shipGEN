@@ -16,3 +16,4 @@ dataset = RPlanDataset(
 img, house_mask, sizes, neighborhood = dataset[0]
 print(img.shape)
 print(min(img.flatten()), max(img.flatten()))
+print(min(house_mask.flatten()), max(house_mask.flatten()))
