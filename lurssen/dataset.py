@@ -5,6 +5,7 @@ from datasets import load_dataset
 import cv2
 import matplotlib.pyplot as plt
 import torch
+from torchvision import transforms
 
 class RPlanDataset(Dataset):
     def __init__(self, split="train", return_graph=False, hf_name="metindeder/rplan-floorplan-edited"):
@@ -101,7 +102,10 @@ class RPlanDataset(Dataset):
         house_mask = torch.tensor(house_mask, dtype=torch.float)
         house_mask = house_mask.unsqueeze(0)
         img = np.array(pil_img)
-        img = torch.tensor(img)
+        transform = transforms.Compose([
+            transforms.ToTensor()
+        ])
+        img = transform(img)
 
         adj, room_ids, room_labels, house = self._door_adjacency(pil_img, return_all=True)
         areas = self._room_areas(room_labels, room_ids, house)     # % relative to the whole footprint
@@ -110,7 +114,6 @@ class RPlanDataset(Dataset):
         neighboorhood = self._from_adj_to_neighboorhood(adj)  
         neighboorhood = torch.tensor(neighboorhood, dtype=torch.long).T.contiguous()        
         sizes = torch.tensor(sizes, dtype=torch.float)    
-        img = img.permute(2,0,1).float()
         return img, house_mask, sizes, neighboorhood
 
 
