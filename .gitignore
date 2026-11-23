@@ -1,4 +1,5 @@
 .vscode
+model.pt
 best_model.pth
 data
 # Byte-compiled / optimized / DLL files

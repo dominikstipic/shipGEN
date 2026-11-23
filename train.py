@@ -1,13 +1,13 @@
 import torch
 from tqdm.auto import tqdm
+import matplotlib.pyplot as plt
 
 from lurssen.models.unet import ConditionalUNet
 from lurssen.models.diff import ConditionalDDPM 
 from lurssen.dataset import get_dataloader
 from lurssen.encoder import RoomGenEncoder
 
-epochs = 100
-
+epochs = 20
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 model = ConditionalUNet(
@@ -25,18 +25,21 @@ diffusion = ConditionalDDPM(
     device=device
 )
 
+encoder = RoomGenEncoder().to(device)
+
 optimizer = torch.optim.AdamW(
-    model.parameters(),
+    list(model.parameters()) + list(encoder.parameters()),
     lr=1e-4,
     weight_decay=1e-4
 )
 
-encoder = RoomGenEncoder()
+train_loader = get_dataloader(num_samples=5, batch_size=1, seed=41)
+test_loader  = get_dataloader(num_samples=5, batch_size=1, seed=42)
 
-train_loader = get_dataloader(num_samples=100, batch_size=1)
-print(len(train_loader))
+train_losses = []
 for epoch in range(epochs):
     model.train()
+    encoder.train()
     total_loss = 0.0
     progress_bar = tqdm(
         train_loader,
@@ -44,11 +47,18 @@ for epoch in range(epochs):
         leave=True
     )
     for floorplan, outershell_mask, node_features, edge_features in progress_bar:
-        # TODO: Multiple batches
-        condition = encoder(outershell_mask, node_features[0], edge_features[0])
-        # B, 3, 256, 256
         floorplan = floorplan.to(device)
-        # B, 512, 8, 8
+        outershell_mask = outershell_mask.to(device)
+        node_features = [x.to(device) for x in node_features]
+        edge_features = [x.to(device) for x in edge_features]
+
+        # TODO: Multiple batches
+        condition = encoder(
+            outershell_mask,
+            node_features[0],
+            edge_features[0]
+        )
+
         condition = condition.to(device)
         loss = diffusion.loss(
             floorplan,
@@ -59,7 +69,9 @@ for epoch in range(epochs):
         optimizer.step()
         total_loss += loss.item()
     avg_loss = total_loss / len(train_loader)
+    train_losses.append(avg_loss)
     print(
         f"Epoch [{epoch+1}/{epochs}] "
         f"Loss: {avg_loss:.6f}"
     )
+torch.save(model.state_dict(), "model.pt")
