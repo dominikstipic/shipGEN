@@ -32,6 +32,12 @@ class ConditionalDDPM:
             dim=0
         )
 
+        assert torch.all(self.betas > 0)
+        assert torch.all(self.betas < 1)
+        assert torch.all(self.alphas > 0)
+        assert torch.all(self.alpha_bars > 0)
+        assert torch.all(self.alpha_bars <= 1)
+
         # alpha_bar at the previous timestep
         self.alpha_bars_prev = F.pad(
             self.alpha_bars[:-1],
@@ -74,7 +80,6 @@ class ConditionalDDPM:
     # ---------------------------------------
 
     def loss(self, x0, condition):
-
         batch_size = x0.shape[0]
 
         # Random diffusion timesteps
@@ -151,6 +156,16 @@ class ConditionalDDPM:
                 x,
                 t_batch,
                 condition
+            )
+
+            print(
+                f"t={t} | "
+                f"x_mean={x.mean().item():.4f} | "
+                f"x_std={x.std().item():.4f} | "
+                f"pred_mean={predicted_noise.mean().item():.4f} | "
+                f"pred_std={predicted_noise.std().item():.4f} | "
+                f"pred_min={predicted_noise.min().item():.4f} | "
+                f"pred_max={predicted_noise.max().item():.4f}"
             )
 
             alpha_t = self.alphas[t]

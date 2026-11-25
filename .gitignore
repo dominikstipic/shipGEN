@@ -1,6 +1,7 @@
 .vscode
 model.pt
 best_model.pth
+encoder.pt
 data
 # Byte-compiled / optimized / DLL files
 __pycache__/

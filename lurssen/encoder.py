@@ -7,25 +7,54 @@ from torch_geometric.data import Data
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+from .adapter import ConditionAdapter 
 
 
 class RoomGenEncoder(nn.Module):
     
     def __init__(self):
         super().__init__()
-        self.gcn_model = RoomGraphEncoder(input_dim=1, hidden_dim=64, output_dim=128)
+        self.gcn_model = RoomGraphEncoder(input_dim=1, 
+                                          hidden_dim=64, 
+                                          output_dim=128)
         self.encoder = ShipGeometryEncoder(latent_dim=512)
+        self.gcn_norm = nn.Sequential(
+            nn.LayerNorm(128),
+            nn.Tanh()
+        )
+        self.geometry_norm = nn.Sequential(
+            nn.GroupNorm(num_groups=32, num_channels=512),
+            nn.Tanh()
+        )
         self.fusion = ImageGraphFusion()
+        self.fusion_norm = nn.Sequential(
+           nn.GroupNorm(32, 512),
+           nn.Tanh()
+        )
+        self.adapter = ConditionAdapter(
+                in_channels=512,
+                out_channels=64)
 
     def forward(self, outershell_mask, node_features, edge_features):
         graph = Data(
             x=node_features,
             edge_index=edge_features
         )
-        graph_features = self.gcn_model(graph.x, graph.edge_index)
+        graph_features = self.gcn_model(graph.x, 
+                                        graph.edge_index)
+        #print("GCN before:", graph_features.min().item(), graph_features.max().item())
+        graph_features = self.gcn_norm(graph_features)
+        #print("GCN after:", graph_features.min().item(), graph_features.max().item())
         _, outtershell_features = self.encoder(outershell_mask)
+        #print("MASK before:", graph_features.min().item(), graph_features.max().item())
+        outtershell_features = self.geometry_norm(outtershell_features)
+        #print("MASK after:", graph_features.min().item(), graph_features.max().item())
         output = self.fusion(outtershell_features, graph_features)
-        return output
+        #print("output BEFORE:", output.min().item(), output.max().item())
+        output = self.fusion_norm(output)
+        #print("output AFTER:", output.min().item(), output.max().item())
+        condition_features = self.adapter(output,image_size=256)
+        return condition_features
 
 
 if __name__ == "__main__":

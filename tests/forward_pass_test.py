@@ -6,10 +6,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 model = ConditionalUNet(
     in_channels=3,
-    cond_channels=512,
-    base_channels=32,
-    time_dim=256
-).to(device)
+    cond_channels=64).to(device)
 
 diffusion = ConditionalDDPM(
     model,
@@ -27,7 +24,7 @@ x0 = torch.randn(
 )
 
 condition = torch.randn(
-    B, 512, 8, 8,
+    B, 64, 256, 256,
     device=device
 )
 

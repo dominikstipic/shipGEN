@@ -11,7 +11,6 @@ dataset = RPlanDataset(
 
 img, house_mask, sizes, neighboorhood = dataset[0]
 
-
 fig, axes = plt.subplots(1, 2, figsize=(12, 6))
 
 # Original image
