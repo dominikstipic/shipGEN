@@ -1,7 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch import nn
-from .unet import ConditionalUNet
+from .cond_unet import ConditionalUNet
 
 
 class ConditionalDDPM:

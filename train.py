@@ -2,7 +2,7 @@ import torch
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 
-from lurssen.models.unet import ConditionalUNet
+from lurssen.models.cond_unet import ConditionalUNet
 from lurssen.models.diff import ConditionalDDPM 
 from lurssen.dataset import get_dataloader
 from lurssen.encoder import RoomGenEncoder

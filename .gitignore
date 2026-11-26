@@ -2,6 +2,7 @@
 model.pt
 best_model.pth
 data
+encoder.pt
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

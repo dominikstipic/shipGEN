@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
-from lurssen.models.unet import ConditionalUNet
+from lurssen.models.cond_unet import ConditionalUNet
 
 class ConditionalFlowMatching:
 
