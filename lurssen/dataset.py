@@ -6,6 +6,7 @@ import cv2
 import matplotlib.pyplot as plt
 import torch
 from torchvision import transforms
+import networkx as nx
 
 class RPlanDataset(Dataset):
     def __init__(self, split="train", hf_name="metindeder/rplan-floorplan-edited"):
@@ -169,10 +170,10 @@ def get_dataloader(
     return dataloader
 
 if __name__ == "__main__":
-    img, mask, sizes, neighboorhood = RPlanDataset()[-5]
+    img, mask, sizes, edge_index = RPlanDataset()[0]
     print(img.shape)
 
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    fig, axes = plt.subplots(1, 3, figsize=(10, 5))
 
     axes[0].imshow(img.permute(1,2,0).squeeze(), cmap="gray")
     axes[0].set_title("Image")
@@ -180,24 +181,26 @@ if __name__ == "__main__":
     axes[1].imshow(mask.squeeze(), cmap="gray")
     axes[1].set_title("Mask")
 
-    for ax in axes:
-        ax.axis("off")
+    for ax in axes: ax.axis("off")
 
+    G = nx.Graph()
+
+    # Add edges
+    G.add_edges_from(edge_index.T.tolist())
+
+    # Visualize
+    pos = nx.spring_layout(G, seed=42)
+
+    nx.draw(
+        G,
+        pos,
+        ax=axes[2],
+        with_labels=True,
+        node_color="lightblue",
+        node_size=800,
+        font_size=12
+    )
+    axes[2].set_title("Room Adjacency Graph")
     plt.tight_layout()
+
     plt.show()
-
-    dl = get_dataloader(batch_size=4)
-
-    for i, (images, house_masks, sizes, edges) in enumerate(dl):
-        print(f"\nBatch {i + 1}")
-        print("-" * 40)
-
-        print("Images:", images.shape)
-        print("House masks:", house_masks.shape)
-
-        for j in range(len(sizes)):
-            print(f"\nSample {j + 1}:")
-            print("  Room sizes:", sizes[j].shape)
-            print("  Edge index:", edges[j].shape)
-        if i == 0:
-            break
