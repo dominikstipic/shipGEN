@@ -96,10 +96,15 @@ class RPlanDataset(Dataset):
         return neighboorhood_matrix
 
     def __getitem__(self, idx):
+        house_mask = self.ds[idx]["conditioning_image"]
+
+        transform = transforms.Compose([
+            transforms.Grayscale(num_output_channels=1),
+            transforms.ToTensor(),
+        ])
+        house_mask = transform(house_mask)
+
         pil_img = self.ds[idx]["image"]
-        house_mask = self._extract_house_mask(pil_img)
-        house_mask = torch.tensor(house_mask, dtype=torch.float)
-        house_mask = house_mask.unsqueeze(0)
         img = np.array(pil_img)
         transform = transforms.Compose([
             transforms.ToTensor(),
@@ -166,6 +171,20 @@ def get_dataloader(
 if __name__ == "__main__":
     img, mask, sizes, neighboorhood = RPlanDataset()[-5]
     print(img.shape)
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+    axes[0].imshow(img.permute(1,2,0).squeeze(), cmap="gray")
+    axes[0].set_title("Image")
+
+    axes[1].imshow(mask.squeeze(), cmap="gray")
+    axes[1].set_title("Mask")
+
+    for ax in axes:
+        ax.axis("off")
+
+    plt.tight_layout()
+    plt.show()
 
     dl = get_dataloader(batch_size=4)
 
