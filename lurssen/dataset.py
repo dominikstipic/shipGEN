@@ -8,9 +8,8 @@ import torch
 from torchvision import transforms
 
 class RPlanDataset(Dataset):
-    def __init__(self, split="train", return_graph=False, hf_name="metindeder/rplan-floorplan-edited"):
+    def __init__(self, split="train", hf_name="metindeder/rplan-floorplan-edited"):
         self.ds = load_dataset(hf_name)[split]
-        self.return_graph = return_graph
 
     def __len__(self):
         return len(self.ds)
@@ -139,7 +138,6 @@ def get_dataloader(
 ):
     dataset = RPlanDataset(
         split=split,
-        return_graph=True,
         hf_name="metindeder/rplan-floorplan-edited"
     )
 
